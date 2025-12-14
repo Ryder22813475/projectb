@@ -1,0 +1,15 @@
+# MERN Project IGNORE LIST
+
+# 忽略 Node.js 的本地依賴資料夾
+client/node_modules
+server/node_modules
+
+# 忽略 React 構建（Build）輸出的資料夾
+client/build
+
+# 忽略環境變數檔案（包含敏感資訊，請務必忽略）
+.env
+.env.local
+
+# 忽略系統檔案
+.DS_Store
