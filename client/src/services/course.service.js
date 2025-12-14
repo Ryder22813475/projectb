@@ -73,7 +73,7 @@ class CourseService {
     }
 
     // 獲得系統中的所有課程 (GET /api/courses)
-    getCourseAll() {
+    getAllCourses() {
         return this.handleApiCall('get', API_URL);
     }
 
