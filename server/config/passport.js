@@ -3,9 +3,10 @@ let ExtractJwt = require("passport-jwt").ExtractJwt;
 const User = require("../models").user;
 
 module.exports = (passport) => {
-  let opts = {};
-  opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
-  opts.secretOrKey = process.env.PASSPORT_SECRET;
+  let opts = {};
+  // ✅ 修正點：將 "jwt" (小寫) 更改為 "JWT" (大寫)，以匹配前端常見的發送格式
+  opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("JWT"); 
+  opts.secretOrKey = process.env.PASSPORT_SECRET;
 
   passport.use(
     new JwtStrategy(opts, async function (jwt_payload, done) {
