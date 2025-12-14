@@ -11,26 +11,61 @@ const CourseComponent = ({ currentUser, setCurrentUser }) => {
 
   // 輔助函數：用於獲取當前用戶的課程數據
 const fetchCourses = async () => {
-    // 🚨 關鍵修正：新增對 .user 屬性的檢查，防止其在讀取 _id 和 role 時崩潰
-    if (!currentUser || !currentUser.user) return; 
-
-    const _id = currentUser.user._id;
-    const role = currentUser.user.role;
-
-    try {
-        let response;
-        if (role === "instructor") {
-            // 講師：獲取他創建的課程
-            response = await CourseService.get(_id);
-        } else if (role === "student") {
-            // 學生：獲取他註冊的課程
-            response = await CourseService.getEnrolledCourses(_id);
-        }
-        setCourseData(response.data);
-    } catch (e) {
-        // 確保捕獲了來自 CourseService 的錯誤
-        console.error("獲取課程數據失敗:", e.response ? e.response.data : e);
+    // 1. 前端預防性檢查：防止 currentUser 讀取時崩潰
+    if (!currentUser || !currentUser.user) {
+        // 如果沒有登入狀態，直接設定為空，並停止執行
+        setCourseData([]);
+        return; 
     }
+    
+    const _id = currentUser.user._id;
+    const role = currentUser.user.role;
+
+    try {
+        let response;
+        
+        if (role === "instructor") {
+            // 講師：獲取他創建的課程
+            response = await CourseService.get(_id);
+        } else if (role === "student") {
+            // 學生：獲取他註冊的課程
+            response = await CourseService.getEnrolledCourses(_id);
+        } else {
+            // 處理未知角色
+            setCourseData([]);
+            return;
+        }
+
+        // 2. 核心修正：檢查 API 回應是否為陣列
+        const data = response.data;
+
+        // 檢查 data 是否為陣列，或是否為包含陣列的物件 (例如 { courses: [...] })
+        if (Array.isArray(data)) {
+            // 最理想的情況：後端直接返回陣列
+            setCourseData(data);
+        } else if (data && Array.isArray(data.courses)) {
+            // 備用結構：如果後端返回 { courses: [...] }
+            setCourseData(data.courses);
+        } else {
+            // 如果收到的不是預期的陣列結構 (例如 HTML 錯誤頁面)
+            console.error("API 回應非預期陣列結構，收到：", data);
+            setCourseData([]);
+        }
+
+    } catch (e) {
+        // 3. 錯誤處理與提示
+        console.error("獲取課程數據失敗:", e.response ? e.response.data : e);
+        
+        // 確保錯誤發生時，courseData 被設定為空陣列，防止 .map 錯誤
+        setCourseData([]);
+        
+        // 如果是 401/403 錯誤，可能是 Token 問題
+        if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+            window.alert("由於授權問題，無法載入課程。請嘗試重新登入。");
+            // 可選：導向登入頁面
+            // navigate("/login"); 
+        }
+    }
 };
 
   useEffect(() => {
